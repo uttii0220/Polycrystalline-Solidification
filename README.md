@@ -105,6 +105,52 @@ The `outputs/` directory is excluded from version control (see `.gitignore`).
 
 ---
 
+---
+
+## Σ3 ATGB Inclination-Dependent GB Energy Comparison
+
+`scripts/potts_sigma3_atgb_inclination_jump_compare.py` implements a dedicated
+2D Potts simulation for **Σ3 Asymmetric Tilt Grain Boundaries** in Si,
+comparing:
+
+- **no_jump**: continuous base-theory energy curve for all inclination angles.
+- **jump**: cusp/discontinuity above 70.53°, matching empirical Si Σ3 data.
+
+Both models start from the **same random initial state** (fixed seed) so the
+comparison is controlled.
+
+### Quick start
+
+```bash
+python3 scripts/potts_sigma3_atgb_inclination_jump_compare.py
+```
+
+Outputs go to `outputs/sigma3_atgb_compare/`:
+| File | Description |
+|------|-------------|
+| `microstructure_comparison.png` | Initial state + final microstructures (no_jump vs jump) side-by-side |
+| `gb_timeseries.png` | Grain-boundary length proxy vs. MC sweep for both models |
+
+### Key parameters (edit at top of script)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NX`, `NY` | 200 | Lattice size |
+| `N_SWEEPS` | 300 | Monte Carlo sweeps |
+| `TEMPERATURE` | 0.1 | Metropolis temperature |
+| `SEED` | 42 | RNG seed for reproducibility |
+
+### Model details
+
+- **Lattice**: 2D square, periodic BC, 8-neighbor (Moore).
+- **States**: only 0 and 1 (Σ3, implicit 60° misorientation).
+- **Inclination angle**: `φ = arctan2(|dy|, |dx|)` from bond vector `(dy, dx)`.
+- **Base theory** (Theory2):
+  `E = 0.026187599·cos(φ) + 0.642051791·sin(φ)`
+- **Jump model**: uses `np.interp` over empirical data for φ ≥ 70.53°.
+
+---
+
 ## Model Notes
 
 - **Misorientation**: angle difference with π-periodicity → Δθ ∈ [0, π/2].
