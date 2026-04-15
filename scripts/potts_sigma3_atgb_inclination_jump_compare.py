@@ -116,20 +116,20 @@ def init_lattice(ny: int, nx: int, rng: np.random.Generator) -> np.ndarray:
 
 # ── Local energy calculation ──────────────────────────────────────────────────
 
-def local_energy(lattice: np.ndarray, y: int, x: int,
-                 model: str, ny: int, nx: int) -> float:
+def local_energy(lattice: np.ndarray, y: int, x: int, model: str) -> float:
     """Compute the total energy of bonds touching site (y, x).
 
     For each of the 8 neighbours:
       - bond energy = 0                       if ids are equal (same grain)
       - bond energy = gb_energy(phi, model)   if ids differ   (grain boundary)
     """
+    ny, nx = lattice.shape
     site_id = lattice[y, x]
     energy = 0.0
     for dy, dx in NEIGHBORS:
-        ny_ = (y + dy) % ny
-        nx_ = (x + dx) % nx
-        if lattice[ny_, nx_] != site_id:
+        neighbor_y = (y + dy) % ny
+        neighbor_x = (x + dx) % nx
+        if lattice[neighbor_y, neighbor_x] != site_id:
             phi = inclination_angle(dy, dx)
             energy += gb_energy(phi, model)
     return energy
@@ -152,7 +152,7 @@ def gb_length(lattice: np.ndarray) -> int:
 # ── Metropolis Monte Carlo ────────────────────────────────────────────────────
 
 def mc_sweep(lattice: np.ndarray, model: str,
-             ny: int, nx: int, temperature: float,
+             temperature: float,
              rng: np.random.Generator) -> np.ndarray:
     """Perform one MC sweep (NX*NY single-site Metropolis attempts).
 
@@ -164,6 +164,7 @@ def mc_sweep(lattice: np.ndarray, model: str,
 
     Returns the updated lattice (modified in-place; also returned for clarity).
     """
+    ny, nx = lattice.shape
     n_attempts = ny * nx
 
     # Pre-draw all random numbers for the sweep (faster than per-step calls)
@@ -177,18 +178,18 @@ def mc_sweep(lattice: np.ndarray, model: str,
         dy, dx = NEIGHBORS[nb_idx[k]]
 
         # Proposed new id = neighbour's current id
-        ny_ = (y + dy) % ny
-        nx_ = (x + dx) % nx
-        new_id = lattice[ny_, nx_]
+        neighbor_y = (y + dy) % ny
+        neighbor_x = (x + dx) % nx
+        new_id = lattice[neighbor_y, neighbor_x]
 
         old_id = lattice[y, x]
         if new_id == old_id:
             continue  # no change → skip
 
         # Energy before and after the proposed flip
-        e_before = local_energy(lattice, y, x, model, ny, nx)
+        e_before = local_energy(lattice, y, x, model)
         lattice[y, x] = new_id
-        e_after = local_energy(lattice, y, x, model, ny, nx)
+        e_after = local_energy(lattice, y, x, model)
 
         # Metropolis acceptance criterion
         delta_e = e_after - e_before
@@ -219,7 +220,6 @@ def run_simulation(model: str, initial_lattice: np.ndarray,
     lattice   : final lattice after n_sweeps
     gb_series : list of GB-length proxy values recorded after each sweep
     """
-    ny, nx = initial_lattice.shape
     lattice = initial_lattice.copy()
 
     # Separate RNG for the MC dynamics (same seed → same thermal noise for
@@ -229,7 +229,7 @@ def run_simulation(model: str, initial_lattice: np.ndarray,
     gb_series = [gb_length(lattice)]  # record initial GB length
 
     for sweep in range(1, n_sweeps + 1):
-        lattice = mc_sweep(lattice, model, ny, nx, temperature, rng)
+        lattice = mc_sweep(lattice, model, temperature, rng)
         gb_series.append(gb_length(lattice))
 
         if sweep % 50 == 0:
