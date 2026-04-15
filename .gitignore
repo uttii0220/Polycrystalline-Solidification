@@ -1,0 +1,25 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Generated simulation outputs (images, videos, data files)
+outputs/**/*.png
+outputs/**/*.jpg
+outputs/**/*.mp4
+outputs/**/*.npy
+outputs/**/*.npz
+outputs/**/*.csv
+
+# Keep the directory itself tracked (via .gitkeep)
+!outputs/.gitkeep
+
+# macOS metadata
+.DS_Store
+
+# Editor / IDE folders
+.vscode/
+.idea/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
